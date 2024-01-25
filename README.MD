@@ -21,5 +21,3 @@ Made with love by
 1. Rheyhan Fahry
 2. Jonathan Marjono
 ```
-
-Womp womp
