@@ -1,0 +1,156 @@
+#Modules
+```{r}
+#libraries
+library(metan)
+library(tidyr)
+library(NbClust)
+library(factoextra)
+library(ggplot2)
+library(cluster)
+library(writexl)
+library(dplyr)
+library(ggpubr)
+
+require(maps)
+```
+
+#Get data and encode variable names
+```{r}
+df<-read.csv("D:/Kuliah/!ANAVAfest/DATA/Data_rev.csv")
+df <- drop_na(df)
+
+#get variables
+variables <- colnames(df)
+
+#Encode variable names
+sequence <- seq(1, length(variables))
+variable_encoded <- paste("x", sequence, sep = "")
+
+colnames(df) <- variable_encoded
+
+variables
+df
+```
+
+#Exploration
+```{r}
+#Exploration
+  #distribution
+par(mfrow = c(4, 3))
+hist(df$x2);hist(df$x3);hist(df$x4);hist(df$x5);hist(df$x6);hist(df$x7); hist(df$x8);hist(df$x9);hist(df$x10)
+par(mfrow = c(1, 1))
+
+  #matrix corr
+plot(corr_coef(df))
+View(df)
+```
+#All
+##Standarization
+```{r}
+standarized_df<-df[2:length(df)]
+row.names(standarized_df)<-df$x1
+standarized_df<-scale(standarized_df) #scale
+```
+
+##Find Cluster size
+```{r}
+#finding the optimal cluster
+  #silhouette
+  fviz_nbclust(standarized_df, kmeans, method = "silhouette") #k=3
+  #elbow
+  fviz_nbclust(standarized_df, kmeans, method = "wss") #k= 4
+  #gap stat
+  fviz_nbclust(x = standarized_df, FUNcluster = kmeans, method = "gap_stat") #k=1
+  #nbclust
+  nb<-NbClust(data = standarized_df, distance = "euclidean", method="kmeans") #k=3
+```
+
+##Clustering
+###PAM
+```{r}
+  #1st visualization 
+pam1 <- pam(standarized_df, k=4, metric="euclidean") #using k=3
+    #text
+fviz_cluster(pam1, data=standarized_df, geom="text", ellipse.type="norm", repel=TRUE, ggtheme=theme_bw()) +
+  labs(title="Cluster plot", subtitle="k=3 clusters", x="Dim1, 20% variance", y="Dim2, 20% variance" )
+    #point
+fviz_cluster(pam1, data=standarized_df, geom="point", ellipse.type="norm", repel=TRUE, ggtheme=theme_bw())
+```
+###K-Means
+```{r}
+  #2nd visualization
+set.seed(456)
+km1 <- kmeans(x = standarized_df, centers = 4) #k=4
+km1
+fviz_cluster(km1, geom = "point", data = standarized_df)+ggtitle("k=3")
+fviz_cluster(object = km1, data = standarized_df, palette = "jco", ggtheme = theme_minimal())
+
+fviz_silhouette(pam1)
+pam1$medoids
+```
+#Economy Only
+##Standarization
+```{r}
+standarized_df<-df[2:9]
+row.names(standarized_df)<-df$x1
+standarized_df<-scale(standarized_df) #scale
+```
+##Find Cluster size
+```{r}
+#finding the optimal cluster
+  #silhouette
+  fviz_nbclust(standarized_df, kmeans, method = "silhouette") #k=2
+  #elbow
+  fviz_nbclust(standarized_df, kmeans, method = "wss") #k= 5
+  #gap stat
+  fviz_nbclust(x = standarized_df, FUNcluster = kmeans, method = "gap_stat") #k=1
+  #nbclust
+  nb<-NbClust(data = standarized_df, distance = "euclidean", method="kmeans") #k=3
+```
+
+##Clustering
+###PAM
+```{r}
+  #1st visualization (use this one)
+pam1 <- pam(standarized_df, k=7, metric="euclidean") #using k=3
+    #text
+fviz_cluster(pam1, data=standarized_df, geom="text", ellipse.type="norm", repel=TRUE, ggtheme=theme_bw()) +
+  labs(title="Cluster plot", subtitle="k=3 clusters", x="Dim1, 20% variance", y="Dim2, 20% variance" )
+    #point
+fviz_cluster(pam1, data=standarized_df, geom="point", ellipse.type="norm", repel=TRUE, ggtheme=theme_bw())
+```
+
+###K-Means
+```{r}
+  #2nd visualization
+set.seed(456)
+km1 <- kmeans(x = standarized_df, centers = 7) #k=3
+km1
+fviz_cluster(km1, geom = "point", data = standarized_df)+ggtitle("k=3")
+fviz_cluster(object = km1, data = standarized_df, palette = "jco", ggtheme = theme_minimal())
+
+fviz_silhouette(pam1)
+pam1$medoids
+```
+##Analisis boxplot
+```{r}
+countrybycluster1<- data.frame(standarized_df,
+                               cluster = as.factor(pam1$cluster)
+)
+#countrybycluster2<- data.frame(df2,cluster = as.factor(km1$cluster))
+countrybycluster1
+
+plot1<- ggplot(countrybycluster1, aes(y = x2, x = cluster, fill=cluster)) + geom_boxplot(alpha=0.3)
+plot2<-ggplot(countrybycluster1, aes(y = x3, x = cluster, fill=cluster)) + geom_boxplot(alpha=0.3)
+plot3<-ggplot(countrybycluster1, aes(y = x4, x = cluster, fill=cluster)) + geom_boxplot(alpha=0.3)
+plot4<-ggplot(countrybycluster1, aes(y = x5, x = cluster, fill=cluster)) + geom_boxplot(alpha=0.3)
+plot5<-ggplot(countrybycluster1, aes(y = x6, x = cluster, fill=cluster)) + geom_boxplot(alpha=0.3)
+plot6<-ggplot(countrybycluster1, aes(y = x7, x = cluster, fill=cluster)) + geom_boxplot(alpha=0.3)
+plot7<-ggplot(countrybycluster1, aes(y = x8, x = cluster, fill=cluster)) + geom_boxplot(alpha=0.3)
+plot8<-ggplot(countrybycluster1, aes(y = x9, x = cluster, fill=cluster)) + geom_boxplot(alpha=0.3)
+plot9<-ggplot(countrybycluster1, aes(y = x10, x = cluster, fill=cluster)) + geom_boxplot(alpha=0.3)
+
+ggarrange(plot1, plot2, plot3, plot4, plot5, plot6, plot7, plot8, plot9,
+          ncol = 3, nrow = 3,  align = "hv", 
+          common.legend = TRUE)
+```
